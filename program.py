@@ -40,8 +40,8 @@ class NondeterministicTuringMachine:
         self.max_depth = max_depth
         self.max_transitions = max_transitions
 
-        initial_config = ["", self.start_state, input_string]  # Initial configuration: [left_tape, state, right_tape]
-        tree = [[initial_config]]  # Tree of configurations: list of lists
+        initial_config = ["", self.start_state, input_string]  # [left_tape, state, right_tape]
+        tree = [[initial_config]]  # Tree of configurations
         transitions = 0
 
         while tree and transitions < self.max_transitions:
@@ -50,12 +50,14 @@ class NondeterministicTuringMachine:
 
             for left_tape, state, right_tape in current_level:
                 if state == self.accept_state:
+                    # Trace and halt immediately upon acceptance
                     self.print_accept_path(tree, len(tree) - 1)
                     return
-                
-                if state == self.reject_state:
-                    continue
 
+                if state == self.reject_state:
+                    continue  # Skip this branch if rejected
+
+                # Read the symbol under the head
                 head_symbol = right_tape[0] if right_tape else "_"
                 transitions += 1
 
@@ -63,7 +65,16 @@ class NondeterministicTuringMachine:
                     print(f"Execution stopped after {self.max_transitions} transitions.")
                     return
 
-                for new_state, write_symbol, direction in self.transitions.get((state, head_symbol), []):
+                # Get transitions for the current state and head symbol
+                possible_transitions = self.transitions.get((state, head_symbol), [])
+
+                if not possible_transitions:
+                    # No valid transitions, move to reject state
+                    next_level.append([left_tape, self.reject_state, right_tape])
+                    continue
+
+                # Process valid transitions
+                for new_state, write_symbol, direction in possible_transitions:
                     new_left_tape, new_right_tape = list(left_tape), list(right_tape)
 
                     # Write symbol
@@ -86,19 +97,24 @@ class NondeterministicTuringMachine:
 
                     # Add new configuration
                     next_level.append(["".join(new_left_tape), new_state, "".join(new_right_tape)])
-            
+
+
+            # Add valid configurations to the tree
             if next_level:
                 tree.append(next_level)
-            
+
+            # Stop if max depth reached
             if len(tree) > self.max_depth:
                 print(f"Execution stopped after reaching max depth of {self.max_depth}.")
                 return
-            
+
+            # Stop if all paths are rejecting
             if not any(config[1] != self.reject_state for config in next_level):
                 print(f"String rejected in {len(tree) - 1} transitions.")
                 return
-        
+
         print("No valid paths found. Machine halted.")
+
 
     def print_accept_path(self, tree, depth):
         """Trace and print the path to the accept state."""
@@ -108,7 +124,6 @@ class NondeterministicTuringMachine:
                 print(f"Level {level}: {config}")
 
 if __name__ == "__main__":
-    # Example usage
     machine_file = input("Enter the Turing machine file name: ")
     input_string = input("Enter the input string: ")
     max_depth = int(input("Enter max depth (default 100): ") or 100)

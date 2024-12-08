@@ -113,15 +113,18 @@ class NondeterministicTuringMachine:
                 print(f"String rejected in {len(tree) - 1} transitions.")
                 return
 
-        print("No valid paths found. Machine halted.")
+        print(f"No valid paths found. Machine halted. configs explored: {len(tree)}")
 
 
     def print_accept_path(self, tree, depth):
         """Trace and print the path to the accept state."""
         print(f"String accepted in {depth} transitions.")
+        num_configs = 0
         for level in range(depth + 1):
             for config in tree[level]:
+                num_configs+=1
                 print(f"Level {level}: {config}")
+        print(f'num_configs: {num_configs-1}')
 
 if __name__ == "__main__":
     machine_file = input("Enter the Turing machine file name: ")
